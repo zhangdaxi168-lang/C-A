@@ -1,7 +1,8 @@
 import sys
 import subprocess
 
-# 🎯 【环境自愈】
+# 🎯 【环境自愈流】
+try:
     import streamlit as st
 except ImportError:
     subprocess.check_call([sys.executable, "-m", "pip", "install", "streamlit"])
@@ -98,7 +99,7 @@ all_history = load_data_from_network()
 if not all_history:
     st.error("❌ 未能成功读取独立账本数据！")
 else:
-    # 🎯 经典 1~8 (包含 1&2 合并项共 8 选项主控)
+    # 🎯 经典老菜单
     main_choice = st.selectbox(
         "请选择运行模式:",
         [
@@ -128,7 +129,7 @@ else:
         pairs = [('A', 'B'), ('B', 'C'), ('A', 'C')]
         for g1, g2 in pairs:
             st.markdown(f"### 📍 【{g1}-{g2} 战区】")
-            for n1, n2 in [(1, 2), (2, 1)]:\
+            for n1, n2 in [(1, 2), (2, 1)]:
                 c1_list = list(itertools.combinations(f_g[g1], n1))
                 c2_list = list(itertools.combinations(f_g[g2], n2))
                 for c1, c2 in itertools.product(c1_list, c2_list):
