@@ -1,8 +1,7 @@
 import sys
 import subprocess
 
-# 🎯 【环境自愈流】
-try:
+# 🎯 【环境自愈】
     import streamlit as st
 except ImportError:
     subprocess.check_call([sys.executable, "-m", "pip", "install", "streamlit"])
