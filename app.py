@@ -15,7 +15,7 @@ import os
 
 # 1. 网页全局基础配置
 st.set_page_config(
-    layout="centered", 
+    layout="wide",  # 调整为宽屏模式，看盘视野更广
     page_title="2026 实战数据审计系统", 
     page_icon="🤖"
 )
@@ -89,19 +89,13 @@ def load_data_from_network():
                         data.append({'id': parts[1], 'nums': draw_nums})
     return sorted(data, key=lambda x: x['id'])
 
-# ==================== 经典老派主面板界面渲染 ====================
-st.title("==============================")
-st.title("  2026 实战数据审计系统")
-st.title("==============================")
-
 all_history = load_data_from_network()
 
-if not all_history:
-    st.error("❌ 未能成功读取独立账本数据！")
-else:
-    # 🎯 经典老菜单
+# ==================== 🛠️ 左侧控制侧边栏 (Sidebar) ====================
+with st.sidebar:
+    st.markdown("### 🛠️ 独立控制台")
     main_choice = st.selectbox(
-        "请选择运行模式:",
+        "选择运行模式:",
         [
             "1. 模式 1&2 (固定组联动审计)",
             "2. 模式 3   (家双野单三)",
@@ -113,22 +107,52 @@ else:
             "8. 模式 9   (4波色结构对撞排行)"
         ]
     )
-
     st.markdown("---")
-
-    # ---------------- 1. 模式 1&2 (固定组联动审计) ----------------
+    
+    # 动态在左侧渲染子配置
     if main_choice.startswith("1."):
-        m_type = st.radio("请选择审计单双数:", ["双", "单"], horizontal=True)
+        m_type = st.radio("审计单双数:", ["双", "单"], horizontal=True)
         q_count = st.number_input("查询期数:", min_value=5, max_value=500, value=60, step=5)
-        
+    elif main_choice.startswith("2."):
+        choice = st.radio("选择分类:", ["1. 家禽双 (牛 羊 鸡 猪)", "2. 野兽单 (鼠 虎 龙 猴)"])
+        q_count = st.number_input("查询期数:", min_value=5, max_value=500, value=60, step=5)
+    elif main_choice.startswith("3."):
+        raw_input = st.text_input("自定义号码:", value="03 06 09 12 15")
+        q_count = st.number_input("查询期数:", min_value=5, max_value=500, value=30, step=5)
+    elif main_choice.startswith("4."):
+        sub_choice = st.selectbox("一肖双号审计项:", [
+            "1. 牛 羊 鸡 猪 (常规)", "2. 鼠 虎 龙 猴 (常规)", "3. 兔 蛇 马 狗 (常规)",
+            "4. 【专项】家禽双 (牛羊鸡猪) + 2+1尾数验证", "5. 【专项】野兽单 (鼠虎龙猴) + 2+1尾数验证"
+        ])
+        q_count = st.number_input("查询期数:", min_value=5, max_value=500, value=60, step=5)
+    elif main_choice.startswith("5."):
+        raw_input = st.text_input("自定义生肖:", value="牛 羊 猪")
+        q_count = st.number_input("查询期数:", min_value=5, max_value=500, value=60, step=5)
+    elif main_choice.startswith("6."):
+        pair_choice = st.radio("选择对撞组合:", ["1. A组(四库) + B组(四花)", "2. A组(四库) + C组(四马)", "3. B组(四花) + C组(四马)"])
+        q_count = st.number_input("查询期数:", min_value=5, max_value=500, value=30, step=5)
+    elif main_choice.startswith("7."):
+        q_count = st.number_input("核心扫描截面期数:", min_value=5, max_value=500, value=60, step=5)
+    elif main_choice.startswith("8."):
+        q_count = st.number_input("回溯视窗期数:", min_value=5, max_value=500, value=60, step=5)
+
+# ==================== 📊 右侧中央主视窗 (Main Page) ====================
+st.markdown("## 🤖 2026 实战数据审计舱")
+st.markdown("---")
+
+if not all_history:
+    st.error("❌ 未能成功读取独立账本数据！")
+else:
+    # ---------------- 1. 模式 1&2 ----------------
+    if main_choice.startswith("1."):
         window_data = all_history[-q_count:]
         def is_odd(z): return ZODIAC_MAP[z][0] % 2 != 0
         f_g = {k: [z for z in v if (not is_odd(z) if m_type=="双" else is_odd(z))] for k, v in GROUPS.items()}
         
-        st.subheader(f"📊 模式 1&2：{m_type}数固定组审计 (近 {q_count} 期)")
+        st.subheader(f"📊 {m_type}数固定组联动审计")
         pairs = [('A', 'B'), ('B', 'C'), ('A', 'C')]
         for g1, g2 in pairs:
-            st.markdown(f"### 📍 【{g1}-{g2} 战区】")
+            st.markdown(f"#### 📍 【{g1}-{g2} 战区】")
             for n1, n2 in [(1, 2), (2, 1)]:
                 c1_list = list(itertools.combinations(f_g[g1], n1))
                 c2_list = list(itertools.combinations(f_g[g2], n2))
@@ -146,26 +170,22 @@ else:
                             for log in hit_logs[::-1]: st.markdown(log)
                         else: st.caption("近期无3码及以上命中。")
 
-    # ---------------- 2. 模式 3 (家双野单三) ----------------
+    # ---------------- 2. 模式 3 ----------------
     elif main_choice.startswith("2."):
-        choice = st.radio("请选择分类:", ["1. 家禽双 (牛 羊 鸡 猪)", "2. 野兽单 (鼠 虎 龙 猴)"])
         attr_key = "1" if "家禽" in choice else "2"
-        q_count = st.number_input("查询期数:", min_value=5, max_value=500, value=60, step=5)
-        
         window_data = all_history[-q_count:]
         target_zodiacs = ATTR_GROUPS[attr_key]['list']
-        
         full_pool = set()
         for z in target_zodiacs: full_pool.update(ZODIAC_MAP[z])
         
-        st.subheader(f"🏮 1. 整体审计 ({'/'.join(target_zodiacs)})")
+        st.subheader(f"🏮 整体结构拦截明细 ({'/'.join(target_zodiacs)})")
         for item in window_data[::-1]:
             match = sorted(list(set(item['nums']) & full_pool))
             if len(match) >= 3:
                 match_str = ".".join([get_html_color_str(n) for n in match])
                 st.markdown(f"➡️ **{item['id']}期** | 命中 **{len(match)}** 码 | 明细: [{match_str}]", unsafe_allow_html=True)
                 
-        st.subheader("🏮 2. 内部三肖热度排行")
+        st.subheader("🏮 内部三肖热度及遗漏排行")
         results = []
         for z_set in itertools.combinations(target_zodiacs, 3):
             pool = set()
@@ -179,18 +199,13 @@ else:
         for i, res in enumerate(results):
             st.markdown(f"**NO.{i+1} 组合**: `{res['z']}` | 💥 命中: {res['hits']} 期 | 当前遗漏: {res['cur_om']} 期 (最大: {res['max_om']}期)")
 
-    # ---------------- 3. 模式 4 (号码自定义查询) ----------------
+    # ---------------- 3. 模式 4 ----------------
     elif main_choice.startswith("3."):
-        raw_input = st.text_input("请输入自定义号码 (支持任意符号分隔):", value="03 06 09 12 15")
-        q_count = st.number_input("查询期数:", min_value=5, max_value=500, value=30, step=5)
-        
         nums = re.findall(r'\d+', raw_input)
         custom_pool = set(int(n) for n in nums)
-        
         if custom_pool:
             window_data = all_history[-q_count:]
             max_om, cur_om = get_omission(custom_pool, all_history)
-            
             leader_A, leader_B, leader_C = 0, 0, 0
             hit_logs = []
             
@@ -206,36 +221,21 @@ else:
                     if cA >= 2 and cA > cB and cA > cC: leader_tag = " <b style='color:#2A9D8F;'>[A池主导]</b>"; leader_A += 1
                     elif cB >= 2 and cB > cA and cB > cC: leader_tag = " <b style='color:#E63946;'>[B池主导]</b>"; leader_B += 1
                     elif cC >= 2 and cC > cA and cC > cB: leader_tag = " <b style='color:#457B9D;'>[C池主导]</b>"; leader_C += 1
-                    
                     hit_logs.append(f"🔹 **{item['id']}期**：中 {len(match)} 码 ➔ [{color_match_str}]{leader_tag}")
             
             st.info(f"📊 历史最长遗漏: **{max_om}** 期 | 当前已连开遗漏: **{cur_om}** 期")
             st.success(f"📈 战区主导统计 ➔ 🟢 A主导: {leader_A}期 | 🔴 B主导: {leader_B}期 | 🔵 C主导: {leader_C}期")
-            st.markdown("### ✨ 爆发明细 (最新置顶)")
-            for log in hit_logs:
-                st.markdown(log, unsafe_allow_html=True)
+            st.markdown("### ✨ 爆发明细")
+            for log in hit_logs: st.markdown(log, unsafe_allow_html=True)
 
-    # ---------------- 4. 模式 5 (对子统计 / 一肖双号) ----------------
+    # ---------------- 4. 模式 5 ----------------
     elif main_choice.startswith("4."):
-        sub_choice = st.selectbox(
-            "请选择一肖双号审计项:",
-            [
-                "1. 牛 羊 鸡 猪 (常规)",
-                "2. 鼠 虎 龙 猴 (常规)",
-                "3. 兔 蛇 马 狗 (常规)",
-                "4. 【专项】家禽双 (牛羊鸡猪) + 2+1尾数验证",
-                "5. 【专项】野兽单 (鼠虎龙猴) + 2+1尾数验证"
-            ]
-        )
-        q_count = st.number_input("查询期数:", min_value=5, max_value=500, value=60, step=5)
-        
         groups_map = {
             "1.": ['牛', '羊', '鸡', '猪'], "2.": ['鼠', '虎', '龙', '猴'], "3.": ['兔', '蛇', '马', '狗'],
             "4.": ['牛', '羊', '鸡', '猪'], "5.": ['鼠', '虎', '龙', '猴']
         }
         target_list = groups_map[sub_choice[:2]]
         is_tail_verify = "专项" in sub_choice
-        
         window_data = all_history[-q_count:]
         overlap_dict = {}
         
@@ -247,7 +247,6 @@ else:
             for z in target_list:
                 z_nums = set(ZODIAC_MAP[z])
                 match = sorted(list(set(draw_nums) & z_nums))
-                
                 if len(match) >= 2:
                     if is_tail_verify:
                         match_tails = set([n % 10 for n in match])
@@ -274,22 +273,18 @@ else:
                     rem_str = ".".join([f"{n:02d}" for n in sorted([n for n in draw_nums if n not in intercepted_nums])])
                     overlap_dict[item['id']] = f"{' '.join(current_period_hits)} — <span style='color:#2A9D8F;'>{rem_str}</span>"
 
-        st.markdown("### ✨ 一肖双号爆发明细 (最新置顶)")
+        st.subheader("✨ 一肖双号爆发流水账本")
         for p_id in sorted(overlap_dict.keys(), reverse=True):
             st.markdown(f"📟 **{p_id}期**：{overlap_dict[p_id]}", unsafe_allow_html=True)
 
-    # ---------------- 5. 模式 6 (生肖自定义对撞审计) ----------------
+    # ---------------- 5. 模式 6 ----------------
     elif main_choice.startswith("5."):
-        raw_input = st.text_input("请输入自定义生肖 (如: 牛 羊 猪):", value="牛 羊 猪")
-        q_count = st.number_input("查询期数:", min_value=5, max_value=500, value=60, step=5)
-        
         target_zodiacs = re.findall(r'[\u4e00-\u9fa5]', raw_input)
         if target_zodiacs:
             window_data = all_history[-q_count:]
             custom_pool = set()
             for z in target_zodiacs:
                 if z in ZODIAC_MAP: custom_pool.update(ZODIAC_MAP[z])
-                
             max_om, cur_om = get_omission(custom_pool, all_history)
             st.info(f"🔍 联锁组合: {target_zodiacs} | 当前遗漏: {cur_om} 期 | 最大遗漏: {max_om} 期")
             
@@ -299,70 +294,53 @@ else:
                     match_str = ".".join([get_html_color_str(n) for n in match])
                     st.markdown(f"🔹 **{item['id']}期**：爆 {len(match)} 码 ➔ [{match_str}]", unsafe_allow_html=True)
 
-    # ---------------- 6. 模式 7 (AB.AC.BC三全中) ----------------
+    # ---------------- 6. 模式 7 ----------------
     elif main_choice.startswith("6."):
-        st.subheader("🏮 结构对撞 (纯净号码对撞流)")
-        pair_choice = st.radio(
-            "请选择对撞组合:",
-            ["1. A组(四库) + B组(四花)", "2. A组(四库) + C组(四马)", "3. B组(四花) + C组(四马)"]
-        )
-        q_count = st.number_input("查询期数 (如60):", min_value=5, max_value=500, value=30, step=5)
-        
         if "A组" in pair_choice and "B组" in pair_choice: target_zodiacs = GROUPS['A'] + GROUPS['B']
         elif "A组" in pair_choice and "C组" in pair_choice: target_zodiacs = GROUPS['A'] + GROUPS['C']
         else: target_zodiacs = GROUPS['B'] + GROUPS['C']
         
         target_pool = set()
         for z in target_zodiacs: target_pool.update(ZODIAC_MAP[z])
-        
         max_om, cur_om = get_omission(target_pool, all_history)
         window_data = all_history[-q_count:]
         
         st.success(f"📈 结构指标 ➔ 当前遗漏: {cur_om} 期 | 历史最大遗漏: {max_om} 期")
-        
         for item in window_data[::-1]:
             match_set = set(item['nums']) & target_pool
             if len(match_set) >= 3:
                 match_str = " | ".join([get_pool_tag(n) for n in sorted(list(match_set))])
                 st.markdown(f"↳ **{item['id']}期**：中 {len(match_set)} 码 [ {match_str} ]", unsafe_allow_html=True)
 
-    # ---------------- 7. 模式 8 (全量对子统计) ----------------
+    # ---------------- 7. 模式 8 ----------------
     elif main_choice.startswith("7."):
         st.subheader("📊 历史全量生肖对出概率审计")
-        q_count = st.number_input("核心扫描截面期数:", min_value=5, max_value=500, value=60, step=5)
-        
         window_data = all_history[-q_count:]
         pair_counts = {}
         
         for item in window_data:
             hit_zodiacs = []
             for z, z_nums in ZODIAC_MAP.items():
-                if len(set(item['nums']) & set(z_nums)) >= 2:
-                    hit_zodiacs.append(z)
+                if len(set(item['nums']) & set(z_nums)) >= 2: hit_zodiacs.append(z)
             if len(hit_zodiacs) >= 2:
                 for p in itertools.combinations(sorted(hit_zodiacs), 2):
                     pair_counts[p] = pair_counts.get(p, 0) + 1
                     
         sorted_pairs = sorted(pair_counts.items(), key=lambda x: x[1], reverse=True)
-        st.markdown(f"#### 📅 近 {q_count} 期对撞概率最高排行：")
         for idx, (pair, cnt) in enumerate(sorted_pairs[:15]):
             st.markdown(f"🏅 **TOP {idx+1}** ➔ `{pair[0]} 🤝 {pair[1]}` 共对出爆发: **{cnt}** 期")
 
-    # ---------------- 8. 模式 9 (4波色结构对撞排行) ----------------
+    # ---------------- 8. 模式 9 ----------------
     elif main_choice.startswith("8."):
-        st.subheader("🌈 模式 9：波色极值对撞审计大盘")
-        q_count = st.number_input("回溯视窗期数:", min_value=5, max_value=500, value=60, step=5)
-        
+        st.subheader("🌈 波色极值对撞审计大盘")
         window_data = all_history[-q_count:]
         target_pool = set(RED_BO + BLUE_BO)
         max_om, cur_om = 0, 0
-        
         for item in all_history:
             if len(set(item['nums']) & target_pool) >= 4: max_om = max(max_om, cur_om); cur_om = 0
             else: cur_om += 1
             
         st.info(f"📊 红蓝双波对撞指标：当前遗漏 {cur_om} 期 | 最大极值遗漏 {max_om} 期")
-        
         for item in window_data[::-1]:
             match_set = set(item['nums']) & target_pool
             if len(match_set) >= 4:
