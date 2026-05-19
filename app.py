@@ -18,23 +18,7 @@ st.set_page_config(
     layout="wide",  # 调整为宽屏模式，看盘视野更广
     page_title="2026 实战数据审计系统", 
     page_icon="🤖"
-)
-# ==================== 🔒 专属私人暗号锁 ====================
-# 💡 这里设置你的看盘暗号，我默认设为了 8888，你可以自己改成任意数字或字母
-MY_PASSWORD = "8888" 
-
-# 在左侧侧边栏做一个暗号输入框
-with st.sidebar:
-    st.markdown("### 🔐 操盘手身份验证")
-    user_input = st.text_input("请输入专属看盘暗号：", type="password")
-    st.markdown("---")
-
-# 验证暗号，如果对不上，直接锁死全盘，外人什么都看不到
-if user_input != MY_PASSWORD:
-    st.warning("⚠️ 身份未验证：请输入正确的暗号解锁审计大盘。")
-    st.image("https://images.unsplash.com/photo-1555421689-491a97ff2040?q=80&w=400&auto=format&fit=crop", caption="独立私有系统 · 未授权拦截")
-    st.stop() # 强制停止后面所有代码的加载
-# ==========================================================
+）
 # 2. 核心铁证地基数据与池子
 ZODIAC_MAP = {
     '马': [1, 13, 25, 37, 49], '蛇': [2, 14, 26, 38], '龙': [3, 15, 27, 39],
